@@ -13,7 +13,7 @@ export default function handler(req, res) {
   }
 
   try {
-    const filePath = path.join(process.cwd(), "adFreeData.json");
+    const filePath = path.join(process.cwd(), "https://raw.githubusercontent.com/erickouassi/Random-Ad-Test-Ad-Free-Mode-Activated/refs/heads/main/adFreeData.json");
     const raw = fs.readFileSync(filePath, "utf8");
     const data = JSON.parse(raw);
 
