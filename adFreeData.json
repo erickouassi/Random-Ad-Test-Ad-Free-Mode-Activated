@@ -1,0 +1,26 @@
+{
+  "keys": [
+    {
+      "key": "A1B2C3D4E5",
+      "id": "user-001",
+      "name": "John Doe",
+      "note": "Donated via PayPal on Jan 2026",
+      "issued": "2026-01-15"
+    },
+    {
+      "key": "X9Y8Z7W6V5",
+      "id": "user-002",
+      "name": "Sarah K.",
+      "note": "Friend — manual override",
+      "issued": "2026-01-20"
+    },
+    {
+      "key": "FREE-2025-USER-01",
+      "id": "user-003",
+      "name": "Test Key",
+      "note": "Internal testing only",
+      "issued": "2026-01-25"
+    }
+  ]
+}
+

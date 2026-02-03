@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ad System Test</title>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 40px;
+      text-align: center;
+      color: #333;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 18px;
+      color: #555;
+      max-width: 600px;
+      margin: 0 auto 20px;
+    }
+
+    /* Hidden test element for ad-block detection */
+    #ad-test {
+      height: 1px;
+      width: 1px;
+      position: absolute;
+      left: -9999px;
+    }
+
+    /* Modal */
+    #ad-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 9999;
+    }
+
+    #ad-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      width: 320px;
+      max-width: 90%;
+      text-align: left;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      animation: popIn 0.3s ease;
+    }
+
+    #ad-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    #ad-disclosure {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 6px;
+    }
+
+    #ad-message {
+      font-size: 16px;
+      color: #333;
+    }
+
+    #ad-message a {
+      color: #0077cc;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    #ad-message a:hover {
+      text-decoration: underline;
+    }
+
+    #ad-footer {
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+      color: #666;
+    }
+
+    #ad-footer a {
+      color: #0077cc;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    #ad-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Ad-Free Key Section */
+    #adfree-section {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    #adfree-input {
+      width: 90%;
+      padding: 6px;
+      margin-bottom: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    #adfree-activate {
+      padding: 6px 12px;
+      background: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    #adfree-status {
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Ad System Test Page</h1>
+  <p>
+    This page shows random FTC-compliant ads.  
+    You can activate ad-free mode using a key provided after donation.
+  </p>
+
+  <!-- Ad-block test element -->
+  <div id="ad-test" class="adsbox"></div>
+
+  <!-- Modal -->
+  <div id="ad-modal" aria-modal="true" role="dialog">
+    <div id="ad-content">
+      <span id="ad-close" aria-label="Close ad">&times;</span>
+
+      <!-- FTC disclosure -->
+      <div id="ad-disclosure">
+        <strong>Ad</strong> · Sponsored Message
+      </div>
+
+      <div id="ad-message"></div>
+
+      <div id="ad-footer">
+        <a id="why-link" target="_blank" rel="noopener noreferrer"></a>
+        <span style="margin: 0 6px;">·</span>
+        <a id="support-link" target="_blank" rel="noopener noreferrer"></a>
+      </div>
+
+      <!-- Ad-Free Key Section -->
+      <div id="adfree-section">
+        <input id="adfree-input" type="text" placeholder="Enter ad-free key" />
+        <button id="adfree-activate">Activate</button>
+        <div id="adfree-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ads = [];
+    let adblockMessage = null;
+    let whyInfo = null;
+    let supportInfo = null;
+
+    const modal = document.getElementById("ad-modal");
+    const messageBox = document.getElementById("ad-message");
+    const closeBtn = document.getElementById("ad-close");
+
+    // Check if ad-free mode is active
+    function isAdFree() {
+      return localStorage.getItem("adFreeMode") === "true";
+    }
+
+    // Validate key with Vercel serverless function
+    async function validateKeyWithServer(key) {
+      try {
+        const res = await fetch("/api/validateKey", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key })
+        });
+
+        const data = await res.json();
+        return data.valid === true;
+      } catch (err) {
+        console.error("Validation error:", err);
+        return false;
+      }
+    }
+
+    // Activate ad-free mode
+    document.getElementById("adfree-activate").onclick = async () => {
+      const key = document.getElementById("adfree-input").value.trim();
+      const status = document.getElementById("adfree-status");
+
+      if (!key) {
+        status.textContent = "Please enter a key.";
+        status.style.color = "red";
+        return;
+      }
+
+      const valid = await validateKeyWithServer(key);
+
+      if (valid) {
+        localStorage.setItem("adFreeMode", "true");
+        status.textContent = "Ad-Free Mode activated on this device.";
+        status.style.color = "green";
+      } else {
+        status.textContent = "Invalid key.";
+        status.style.color = "red";
+      }
+    };
+
+    // Load JSON config
+    fetch("data.json")
+      .then(res => res.json())
+      .then(data => {
+        ads = data.ads || [];
+        adblockMessage = data.adblock_message || null;
+        whyInfo = data.why_am_i_seeing_this || null;
+        supportInfo = data.support_no_ads || null;
+
+        if (whyInfo) {
+          const whyLink = document.getElementById("why-link");
+          whyLink.textContent = whyInfo.text;
+          whyLink.href = whyInfo.url;
+        }
+
+        if (supportInfo) {
+          const supportLink = document.getElementById("support-link");
+          supportLink.textContent = supportInfo.text;
+          supportLink.href = supportInfo.url;
+        }
+
+        startRandomAds();
+      });
+
+    // Detect ad blocker
+    function isAdBlocked() {
+      const test = document.getElementById("ad-test");
+      return !test || test.offsetHeight === 0;
+    }
+
+    function renderAd(ad) {
+      if (ad.type === "text") {
+        return `<a href="${ad.url}" target="_blank" rel="noopener noreferrer">${ad.message}</a>`;
+      }
+
+      if (ad.type === "image") {
+        return `
+          <a href="${ad.url}" target="_blank" rel="noopener noreferrer">
+            <img src="${ad.image}" alt="Sponsored content" style="width:100%; border-radius:8px;">
+          </a>
+        `;
+      }
+
+      return "Unknown ad format";
+    }
+
+    function showAd() {
+      if (isAdFree()) return;
+
+      modal.style.visibility = "visible";
+      modal.style.opacity = "1";
+
+      if (isAdBlocked() && adblockMessage) {
+        messageBox.innerHTML = `
+          <strong>${adblockMessage.title}</strong><br><br>
+          ${adblockMessage.message}<br><br>
+          <a href="${adblockMessage.url}" target="_blank" rel="noopener noreferrer" style="font-weight:bold;">
+            ${adblockMessage.cta}
+          </a>
+        `;
+        return;
+      }
+
+      if (!ads.length) {
+        messageBox.textContent = "No sponsored messages available.";
+        return;
+      }
+
+      const randomAd = ads[Math.floor(Math.random() * ads.length)];
+      messageBox.innerHTML = renderAd(randomAd);
+    }
+
+    closeBtn.onclick = () => {
+      modal.style.opacity = "0";
+      setTimeout(() => {
+        modal.style.visibility = "hidden";
+      }, 300);
+    };
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeBtn.onclick();
+    });
+
+    function randomInterval(min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
+    }
+
+    function startRandomAds() {
+      setTimeout(() => {
+        showAd();
+        startRandomAds();
+      }, randomInterval(10, 40));
+    }
+  </script>
+</body>
+</html>

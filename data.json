@@ -1,0 +1,46 @@
+{
+  "ads": [
+    {
+      "type": "text",
+      "message": "✨ New Devotional Guide — Click to read",
+      "url": "https://your-link-1.com"
+    },
+    {
+      "type": "text",
+      "message": "🙏 Join our weekly prayer reflections",
+      "url": "https://your-link-2.com"
+    },
+    {
+      "type": "image",
+      "image": "img/ad1.jpg",
+      "url": "https://your-link-3.com"
+    },
+    {
+      "type": "image",
+      "image": "img/ad2.jpg",
+      "url": "https://your-link-4.com"
+    },
+    {
+      "type": "text",
+      "message": "🔥 New XP‑Devotion tools are now live",
+      "url": "https://your-link-5.com"
+    }
+  ],
+
+  "adblock_message": {
+    "title": "Ad Disclosure",
+    "message": "We noticed you're using an ad blocker. This message is not an ad — it's a required disclosure letting you know that some content on this site may be sponsored.",
+    "cta": "Learn more about our sponsorships",
+    "url": "https://your-ftc-info-page.com"
+  },
+
+  "why_am_i_seeing_this": {
+    "text": "Why am I seeing this?",
+    "url": "https://your-transparency-page.com"
+  },
+
+  "support_no_ads": {
+    "text": "Support us without ads",
+    "url": "https://your-donation-page.com"
+  }
+}
